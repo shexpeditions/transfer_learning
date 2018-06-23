@@ -121,9 +121,8 @@ def random_crop_gen(images_filename, labels, batch_size, target_width, net_width
             yield X, Y
 
 def read_images_to_tensor(image_files, target_width):
-        
-    image_size = 224
-    image_tensor = np.zeros((len(image_files), image_size, image_size, 3), dtype=np.float)
+            
+    image_tensor = np.zeros((len(image_files), target_width, target_width, 3), dtype=np.float)
 
     for index, fn in enumerate(image_files):
         img = imread(image_files[index], mode='RGB') 

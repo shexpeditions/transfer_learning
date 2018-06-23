@@ -15,15 +15,15 @@ import argparse
 
 def create_bottlenet_features_inception_v3(image_tensor):
         
-    from keras.applications import InceptionV3
-    from keras.applications import preprocess_input as preprocess_input_inceptionV3
+    from keras.applications.inception_v3 import InceptionV3
+    from keras.applications.inception_v3 import preprocess_input as preprocess_input_inceptionV3
 
     inceptionV3 = InceptionV3(weights='imagenet', include_top=False)
-    print(inceptionV3.summary())
+    #print(inceptionV3.summary())
 
-    bottleneck_model = Model(inputs=inceptionV3.input, outputs=inceptionV3.get_layer('mixed').output)
+    bottleneck_model = Model(inputs=inceptionV3.input, outputs=inceptionV3.get_layer('mixed10').output)
 
-    print(bottleneck_model.summary())
+    #print(bottleneck_model.summary())
 
     bottleneck_features = bottleneck_model.predict(preprocess_input_inceptionV3(image_tensor))
     print(bottleneck_features.shape)
@@ -35,11 +35,11 @@ def create_bottlenet_features_vgg19(image_tensor):
     from keras.applications.vgg19 import VGG19
     from keras.applications.vgg19 import preprocess_input as preprocess_input_vgg19
     vgg19 = VGG19(weights='imagenet', include_top=False)
-    print(vgg19.summary())
+    #print(vgg19.summary())
 
     bottleneck_model = Model(inputs=vgg19.input, outputs=vgg19.get_layer('block5_pool').output)
 
-    print(bottleneck_model.summary())
+    #print(bottleneck_model.summary())
 
     bottleneck_features = bottleneck_model.predict(preprocess_input_vgg19(image_tensor))
     print(bottleneck_features.shape)
@@ -51,11 +51,11 @@ def create_bottlenet_features_xception(image_tensor):
     from keras.applications.xception import Xception
     from keras.applications.xception import preprocess_input as preprocess_input_xception
     xception = Xception(weights='imagenet', include_top=False)
-    print(xception.summary())
+    #print(xception.summary())
 
     bottleneck_model = Model(inputs=xception.input, outputs=xception.get_layer('block14_sepconv2_act').output)
 
-    print(bottleneck_model.summary())
+    #print(bottleneck_model.summary())
 
     bottleneck_features = bottleneck_model.predict(preprocess_input_xception(image_tensor))
     print(bottleneck_features.shape)
@@ -64,15 +64,17 @@ def create_bottlenet_features_xception(image_tensor):
 
 if __name__ == '__main__':
 
+    
+
     parser = argparse.ArgumentParser()
-    parser.add_argument("base_dir", type=str,
+    parser.add_argument("--base_dir", type=str,
                         help="directory to image set (contains train, valid, test folder")
 
-    parser.add_argument("target_width", type=int,
-                        help="target width for the base network")
-
-    parser.add_argument("base_net", type=str, 
+    parser.add_argument("--base_net", type=str, 
                         help="the base net that will be used for feature extraction")
+
+    parser.add_argument("--target_width", type=int,
+                        help="target width for the base network")
     # parser.add_argument("-v", "--verbose", action="store_true",
     #                     help="increase output verbosity")
     args = parser.parse_args()
@@ -136,17 +138,27 @@ if __name__ == '__main__':
     image_tensor_train = image_utils.read_images_to_tensor(train_image_files, target_width=target_width)
     image_tensor_valid = image_utils.read_images_to_tensor(valid_image_files, target_width=target_width)
     image_tensor_test = image_utils.read_images_to_tensor(test_image_files, target_width=target_width)
-    
-    bottleneck_features_train = create_bottlenet_features_xception(image_tensor_train)
-    bottleneck_features_valid = create_bottlenet_features_xception(image_tensor_valid)
-    bottleneck_features_test = create_bottlenet_features_xception(image_tensor_test)
+    if base_net == 'vgg19':
+        bottleneck_features_train = create_bottlenet_features_vgg19(image_tensor_train)
+        bottleneck_features_valid = create_bottlenet_features_vgg19(image_tensor_valid)
+        bottleneck_features_test = create_bottlenet_features_vgg19(image_tensor_test)
+    elif base_net == 'inceptionV3':
+        bottleneck_features_train = create_bottlenet_features_inception_v3(image_tensor_train)
+        bottleneck_features_valid = create_bottlenet_features_inception_v3(image_tensor_valid)
+        bottleneck_features_test = create_bottlenet_features_inception_v3(image_tensor_test)
+    elif base_net == 'xception':
+        bottleneck_features_train = create_bottlenet_features_xception(image_tensor_train)
+        bottleneck_features_valid = create_bottlenet_features_xception(image_tensor_valid)
+        bottleneck_features_test = create_bottlenet_features_xception(image_tensor_test)
+    else:
+        print('unknown base net')
 
     # # Predict
-    np.savez( dir_bottleneck_features + '/bottleneck_train_valid_test_xception.npz',
+    np.savez( dir_bottleneck_features + '/bottleneck_train_valid_test_{0}.npz'.format(base_net),
         bottleneck_features_train=bottleneck_features_train,
         bottleneck_features_valid=bottleneck_features_valid,
         bottleneck_features_test=bottleneck_features_test)
 
-    np.savez( dir_bottleneck_features + '/labels_train_val_xception.npz',
+    np.savez( dir_bottleneck_features + '/labels_train_val.npz',
         y_train=y_train,
         y_valid=y_valid)    
