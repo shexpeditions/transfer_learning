@@ -10,17 +10,30 @@ import numpy as np
 
 from keras.models import Model
 
-from keras.applications.vgg19 import VGG19
-from keras.applications.vgg19 import preprocess_input as preprocess_input_vgg19
-
-from keras.applications.xception import Xception
-from keras.applications.xception import preprocess_input as preprocess_input_xception
 import image_utils
-
 import argparse
+
+def create_bottlenet_features_inception_v3(image_tensor):
+        
+    from keras.applications import InceptionV3
+    from keras.applications import preprocess_input as preprocess_input_inceptionV3
+
+    inceptionV3 = InceptionV3(weights='imagenet', include_top=False)
+    print(inceptionV3.summary())
+
+    bottleneck_model = Model(inputs=inceptionV3.input, outputs=inceptionV3.get_layer('mixed').output)
+
+    print(bottleneck_model.summary())
+
+    bottleneck_features = bottleneck_model.predict(preprocess_input_inceptionV3(image_tensor))
+    print(bottleneck_features.shape)
+
+    return bottleneck_features
 
 def create_bottlenet_features_vgg19(image_tensor):
 
+    from keras.applications.vgg19 import VGG19
+    from keras.applications.vgg19 import preprocess_input as preprocess_input_vgg19
     vgg19 = VGG19(weights='imagenet', include_top=False)
     print(vgg19.summary())
 
@@ -35,6 +48,8 @@ def create_bottlenet_features_vgg19(image_tensor):
 
 def create_bottlenet_features_xception(image_tensor):
 
+    from keras.applications.xception import Xception
+    from keras.applications.xception import preprocess_input as preprocess_input_xception
     xception = Xception(weights='imagenet', include_top=False)
     print(xception.summary())
 
@@ -51,16 +66,34 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("base_dir", type=str,
-                        help="directory to image set (contains train, valid, test folder)")
+                        help="directory to image set (contains train, valid, test folder")
+
+    parser.add_argument("target_width", type=int,
+                        help="target width for the base network")
+
+    parser.add_argument("base_net", type=str, 
+                        help="the base net that will be used for feature extraction")
     # parser.add_argument("-v", "--verbose", action="store_true",
     #                     help="increase output verbosity")
     args = parser.parse_args()
+
+    methods = dict()
+    methods['vgg19']  = True
+    methods['inceptionV3']  = True
+    methods['xception']  = True    
 
     if not os.path.exists(args.base_dir):
         print('base_dir {0} does not exit'.format(args.base_dir))
         exit()
     
     base_dir = args.base_dir
+
+    target_width = args.target_width
+    base_net = args.base_net
+
+    if not base_net in methods:
+        print('unknown base net')
+        exit()    
     
     dir_training_images = base_dir + 'train/'
     dir_valid_images = base_dir + 'valid/'
@@ -100,9 +133,9 @@ if __name__ == '__main__':
 
     # image size VGG, RESNET: 224
     # image size XCeption, Inception 299
-    image_tensor_train = image_utils.read_images_to_tensor(train_image_files, target_width=224)
-    image_tensor_valid = image_utils.read_images_to_tensor(valid_image_files, target_width=224)
-    image_tensor_test = image_utils.read_images_to_tensor(test_image_files, target_width=224)
+    image_tensor_train = image_utils.read_images_to_tensor(train_image_files, target_width=target_width)
+    image_tensor_valid = image_utils.read_images_to_tensor(valid_image_files, target_width=target_width)
+    image_tensor_test = image_utils.read_images_to_tensor(test_image_files, target_width=target_width)
     
     bottleneck_features_train = create_bottlenet_features_xception(image_tensor_train)
     bottleneck_features_valid = create_bottlenet_features_xception(image_tensor_valid)
