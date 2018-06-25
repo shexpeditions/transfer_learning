@@ -63,9 +63,7 @@ def create_bottlenet_features_xception(image_tensor):
     return bottleneck_features
 
 if __name__ == '__main__':
-
     
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--base_dir", type=str,
                         help="directory to image set (contains train, valid, test folder")
@@ -130,6 +128,7 @@ if __name__ == '__main__':
 
     y_train = LabelBinarizer().fit_transform(train_image_labels)
     y_valid = LabelBinarizer().fit_transform(valid_image_labels)
+    y_test = LabelBinarizer().fit_transform(test_image_labels)
 
     #img = imread(train_image_files[0], mode='RGB')
 
@@ -159,6 +158,7 @@ if __name__ == '__main__':
         bottleneck_features_valid=bottleneck_features_valid,
         bottleneck_features_test=bottleneck_features_test)
 
-    np.savez( dir_bottleneck_features + '/labels_train_val.npz',
+    np.savez( dir_bottleneck_features + '/labels_train_val_test.npz',
         y_train=y_train,
-        y_valid=y_valid)    
+        y_valid=y_valid,
+        y_test=y_test)    
