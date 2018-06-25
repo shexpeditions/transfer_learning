@@ -20,15 +20,18 @@ def read_images_filenames(dir_images, folders, extension='jpg'):
         # read training filenames
         current_folder = dir_images + folder +'/'
         folder_contents = os.listdir(current_folder)
-                
+
+        local_list = []  
         for entry in folder_contents:
             if os.path.isfile(os.path.join(current_folder, entry)):
                 if entry.endswith(extension):
-                    image_files.append(current_folder + entry)
+                    local_list.append(current_folder + entry)                    
                     
-        image_files.sort()
-        for fn in image_files:
-            image_labels.append(folder)            
+        local_list.sort()
+
+        for fn in local_list:
+            image_labels.append(folder)   
+            image_files.append(fn)
 
     return image_files, image_labels
 
